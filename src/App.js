@@ -1,10 +1,10 @@
-import { useTable } from "react-table";
-import { matchSorter } from "match-sorter";
+import FilterTable from "./components/filter";
 
 const App = () => {
   return (
     <div>
-      <h1>React Table</h1>
+      <h1>FilterTable</h1>
+      <FilterTable />
     </div>
   );
 };
