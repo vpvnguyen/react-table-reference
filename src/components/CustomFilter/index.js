@@ -1,23 +1,57 @@
 import React from "react";
 import styled from "styled-components";
 import { useTable, useFilters, useFlexLayout } from "react-table";
-// A great library for fuzzy filtering/sorting items
-import { matchSorter } from "match-sorter";
-
 import makeData from "./makeData";
 
-const Styles = styled.div`
-  padding: 1rem;
+const StyledTable = styled.div`
+  padding: 1em;
   border: 1px solid black;
   border-radius: 20px;
   text-align: left;
+  gap: 1em;
+
+  h1 {
+    padding: 0 0 1em 0;
+  }
   table {
     border-spacing: 0;
-
     thead {
+      display: flex;
+      flex-direction: column-reverse;
       border-bottom: 1px solid black;
       tr {
         th {
+          padding: 0.5em;
+          input {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            -ms-appearance: none;
+            -o-appearance: none;
+            border: none;
+            outline: none;
+
+            width: 80%;
+            border-bottom: 1px solid black;
+          }
+          button {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            -ms-appearance: none;
+            -o-appearance: none;
+            border: none;
+            outline: none;
+
+            width: 80%;
+            border: 0;
+            border-radius: 0.5em;
+            padding: 0.5em;
+            font-size: 0.75em;
+            color: white;
+            background: darkslateblue;
+            cursor: pointer;
+          }
         }
       }
     }
@@ -28,115 +62,43 @@ const Styles = styled.div`
         :hover {
           background-color: #d3d3d380;
         }
+        td {
+          padding: 0.5em;
+        }
       }
     }
   }
 `;
 
-const Input = styled.input`
-  width: 80%;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  -ms-appearance: none;
-  -o-appearance: none;
-  border: none;
-  outline: none;
-  border-bottom: 1px solid black;
-`;
-
-const Button = styled.button`
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  -ms-appearance: none;
-  -o-appearance: none;
-  border: none;
-  outline: none;
-
-  background-color: -internal-light-dark(white, blue);
-  width: 80%;
-  border-radius: 20px;
-`;
-
-const Thead = styled.thead`
-  display: flex;
-  flex-direction: column-reverse;
-`;
-
 // FILTERS ========================================================================
-function StringMatchFilter({ column: { filterValue, setFilter, parent } }) {
+const StringMatchFilter = ({ column: { filterValue, setFilter, parent } }) => {
   return (
-    <Input
+    <input
       value={filterValue || ""}
       onChange={(e) => {
-        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+        setFilter(e.target.value || undefined); // undefined to entirely remove filter
       }}
       placeholder={`${parent.Header}`}
     />
   );
-}
+};
 function StringMatchFilterButton({
   column: { filterValue, setFilter, parent },
 }) {
   return (
-    <Button
+    <button
       onClick={(e) => {
         console.log("StringMatchFilterButton");
-        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+        setFilter(e.target.value || undefined); // undefined to entirely remove filter
       }}
     >
       Apply Filter
-    </Button>
+    </button>
   );
 }
-function fuzzyTextFilterFn(rows, id, filterValue) {
-  return matchSorter(rows, filterValue, { keys: [(row) => row.values[id]] });
-}
-// Let the table remove the filter if the string is empty
-fuzzyTextFilterFn.autoRemove = (val) => !val;
 
 // TABLE ========================================================================
-function Table({ columns, data }) {
-  const defaultColumn = React.useMemo(
-    () => ({
-      // When using the useFlexLayout:
-      minWidth: 30, // minWidth is only used as a limit for resizing
-      width: 150, // width is used for both the flex-basis and flex-grow
-      maxWidth: 200, // maxWidth is only used as a limit for resizing
-    }),
-    []
-  );
-  const filterTypes = React.useMemo(
-    () => ({
-      // Add a new fuzzyTextFilterFn filter type.
-      fuzzyText: fuzzyTextFilterFn,
-      applyFilter: (rows, id, filterValue) => {
-        return rows.filter((row) => {
-          const rowValue = row.values[id];
-          return rowValue !== undefined
-            ? String(rowValue)
-                .toLowerCase()
-                .startsWith(String(filterValue).toLowerCase())
-            : true;
-        });
-      },
-      // Or, override the default text filter to use
-      // "startWith"
-      // text: (rows, id, filterValue) => {
-      //   return rows.filter((row) => {
-      //     const rowValue = row.values[id];
-      //     return rowValue !== undefined
-      //       ? String(rowValue)
-      //           .toLowerCase()
-      //           .startsWith(String(filterValue).toLowerCase())
-      //       : true;
-      //   });
-      // },
-    }),
-    []
-  );
-
+const Table = ({ title, columns, data }) => {
   const {
     getTableProps,
     getTableBodyProps,
@@ -148,8 +110,30 @@ function Table({ columns, data }) {
     {
       columns,
       data,
-      defaultColumn, // Be sure to pass the defaultColumn option
-      filterTypes,
+      defaultColumn: React.useMemo(
+        () => ({
+          // useFlexLayout
+          minWidth: 30, // minWidth is only used as a limit for resizing
+          width: 150, // width is used for both the flex-basis and flex-grow
+          maxWidth: 200, // maxWidth is only used as a limit for resizing
+        }),
+        []
+      ),
+      filterTypes: React.useMemo(
+        () => ({
+          text: (rows, id, filterValue) => {
+            return rows.filter((row) => {
+              const rowValue = row.values[id];
+              return rowValue !== undefined
+                ? String(rowValue)
+                    .toLowerCase()
+                    .startsWith(String(filterValue).toLowerCase())
+                : true;
+            });
+          },
+        }),
+        []
+      ),
       // manualFilters: true,
     },
     useFilters,
@@ -170,21 +154,23 @@ function Table({ columns, data }) {
   const firstPageRows = rows.slice(0, 10);
 
   return (
-    <>
+    <StyledTable>
+      <h1>{title}</h1>
       <table {...getTableProps()}>
-        <Thead>
+        <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => (
                 <th {...column.getHeaderProps()}>
-                  {/* Render Filters */}
+                  {/* Headers and Filters */}
                   <div>{column.Filter ? column.render("Filter") : null}</div>
                   {column.render("Header")}
                 </th>
               ))}
             </tr>
           ))}
-        </Thead>
+        </thead>
+
         <tbody {...getTableBodyProps()}>
           {firstPageRows.map((row, i) => {
             prepareRow(row);
@@ -200,19 +186,20 @@ function Table({ columns, data }) {
           })}
         </tbody>
       </table>
-      <br />
+
+      {/* EXAMPLE LOG - Remove Later */}
       <div>Showing the first 20 results of {rows.length} rows</div>
       <div>
         <pre>
           <code>{JSON.stringify(state.filters, null, 2)}</code>
         </pre>
       </div>
-    </>
+    </StyledTable>
   );
-}
+};
 
-// EXPORT TABLE ==================================================================
-function CustomFilterTable() {
+// RENDER TABLE WITH DATA ==========================================
+const CustomFilterTable = () => {
   const columns = React.useMemo(
     () => [
       {
@@ -263,7 +250,7 @@ function CustomFilterTable() {
         ],
       },
       {
-        Header: "Filter",
+        Header: "Filter", // Figure out how to remove name
         columns: [
           {
             accessor: "progress",
@@ -277,11 +264,7 @@ function CustomFilterTable() {
 
   const data = React.useMemo(() => makeData(100000), []);
 
-  return (
-    <Styles>
-      <Table columns={columns} data={data} />
-    </Styles>
-  );
-}
+  return <Table title="Table Name" columns={columns} data={data} />;
+};
 
 export default CustomFilterTable;
