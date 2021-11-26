@@ -13,6 +13,7 @@ const StyledTable = styled.div`
   h1 {
     padding: 0 0 1em 0;
   }
+
   table {
     border-spacing: 0;
     thead {
